@@ -1,4 +1,4 @@
-# ESP_Brookesia Phone
+# ESP_Brookesia Phone - Tested on ESP-IDF 5.5.4
 
 [中文版本](./README_CN.md)
 
