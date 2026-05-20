@@ -70,6 +70,63 @@ To experience video playback, save MJPEG format videos on an SD card and insert 
    ffmpeg -i YOUR_INPUT_FILE_NAME.mp4 -vcodec mjpeg -q:v 2 -vf "scale=1024:600" -acodec copy YOUR_OUTPUT_FILE_NAME.mjpeg
 ```
 
+## Adaptations for the SCINTIX P4 Custom Board
+
+This fork has been adapted to run on a custom carrier built around the **ESP32-P4 + ESP32-C6** combination mounted on a **Waveshare CM4-to-Pi4 adapter**. It is not the reference ESP32-P4-Function-EV-Board. The differences below are required for that hardware and to fix a runtime crash in the Camera app that affects all setups using current `esp-dl 3.1.0` together with `esp_hosted 2.12.x`.
+
+### Target hardware
+
+- **MCU**: ESP32-P4 rev. v3.1 (32 MB hex PSRAM @ 250 MHz, 32 MB flash).
+- **Wireless coprocessor**: ESP32-C6 connected over SDIO (4-bit, 40 MHz) via `esp_hosted` 2.12.
+- **Carrier**: Waveshare CM4-to-Pi4 adapter, hosting the display and camera FPCs.
+- **Display**: 7" 1024×600 MIPI-DSI panel driven by EK79007.
+- **Camera**: MIPI-CSI module based on the SC2336 sensor (1280×720).
+- **Touch**: GT911 over I2C.
+
+### Heap configuration (critical)
+
+The default `idf.py menuconfig` for a fresh P4 + esp_hosted 2.12 project sets `CONFIG_SPIRAM_USE_CAPS_ALLOC=y`. With that option, the standard C/C++ `malloc()`/`new` allocates **only from internal SRAM**; PSRAM is reachable only through explicit `heap_caps_malloc(..., MALLOC_CAP_SPIRAM)`. The new `esp_hosted` SDIO/RPC stack and the `esp-dl` C++ runtime (vectors of strings produced by `FbsModel::topological_sort`, per-tensor metadata, etc.) easily exceed the ~340 KiB of internal SRAM available after BSS/IRAM is loaded, producing `std::bad_alloc` when the Camera app builds the AI models.
+
+This project must therefore use the alternative paradigm in `sdkconfig`:
+
+```
+# CONFIG_SPIRAM_USE_CAPS_ALLOC is not set
+CONFIG_SPIRAM_USE_MALLOC=y
+CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL=2048
+CONFIG_SPIRAM_MALLOC_RESERVE_INTERNAL=32768
+CONFIG_SPIRAM_ALLOW_BSS_SEG_EXTERNAL_MEMORY=y
+```
+
+With these settings `malloc()`/`new` transparently fall back to PSRAM for any request larger than 2 KiB, while keeping 32 KiB of internal RAM reserved for IRQ/DMA-safe allocations. The C++ STL overhead of `esp-dl` ends up in PSRAM and the crash disappears.
+
+If you change the heap paradigm, run `idf.py fullclean` before rebuilding — the linker layout and BSS section attributes are regenerated.
+
+### Camera app: mutually-exclusive AI model loading
+
+`Camera::run()` no longer eagerly instantiates both `PedestrianDetect` and `HumanFaceDetect`. The two detectors are loaded lazily by `camera_dectect_task` based on the active event-group bit (`CAMERA_EVENT_PED_DETECT` / `CAMERA_EVENT_HUMAN_DETECT`), and the inactive one is freed before the new one is loaded. This is required because `HumanFaceDetect` itself instantiates two sub-models (MSR + MNP) that must coexist; keeping the pedestrian model alive in parallel would cumulatively exhaust internal heap regardless of the heap mode above.
+
+Implementation details:
+
+- The switch between detectors happens in `ensure_detect_mode()` inside [components/apps/camera/Camera.cpp](components/apps/camera/Camera.cpp), invoked at the top of the detect-task loop.
+- The mode-switch button only toggles the event-group bits — model load/unload runs on the detect task, which is pinned to core 1 and is allowed to block briefly (~1 s) without affecting LVGL or the video stream.
+
+### `HEAP_DUMP` diagnostic macro
+
+[Camera.cpp](components/apps/camera/Camera.cpp) defines a `HEAP_DUMP(stage)` macro that logs `INTERNAL` / `DMA` / `SPIRAM` free and largest-block sizes. It is called around each model load/unload and at camera entry, so memory pressure is visible at runtime in the serial log. Healthy values on this board after the changes above are roughly:
+
+- `camera run() entry`: INTERNAL free ≈ 100 KiB, largest ≈ 40–50 KiB
+- after `pedestrian` load: INTERNAL free ≈ 60 KiB
+- after `humanface` (MSR+MNP) load: INTERNAL free ≈ 40–60 KiB
+- PSRAM free: several MiB throughout
+
+If you ever see INTERNAL `largest` drop near or below the size of a model's metadata block (~22 KiB), the heap has fragmented; the lazy-load logic should still recover by freeing the other detector.
+
+### Known constraints
+
+- The pedestrian (`Pico`) model consumes ~38 KiB of internal RAM and ~552 KiB of PSRAM for working tensors.
+- Face detection requires both `MSR` and `MNP` to be resident in PSRAM during inference (they are chained in `MSRMNP::run`), so its peak footprint is higher than pedestrian's.
+- Loading a model on a long-running session may fail due to internal-heap fragmentation rather than total size. The `HEAP_DUMP` traces above help distinguish the two failure modes.
+
 ## How to Use the Example
 
 

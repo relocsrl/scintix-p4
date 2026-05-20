@@ -52,6 +52,16 @@ LV_IMG_DECLARE(img_app_camera);
 
 static const char *TAG = "Camera";
 
+#define HEAP_DUMP(stage)                                                                                       \
+    ESP_LOGW(TAG, "[HEAP %-28s] INTERNAL free=%u largest=%u | DMA free=%u largest=%u | SPIRAM free=%u largest=%u", \
+             stage,                                                                                            \
+             (unsigned)heap_caps_get_free_size(MALLOC_CAP_INTERNAL),                                           \
+             (unsigned)heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL),                                  \
+             (unsigned)heap_caps_get_free_size(MALLOC_CAP_DMA),                                                \
+             (unsigned)heap_caps_get_largest_free_block(MALLOC_CAP_DMA),                                       \
+             (unsigned)heap_caps_get_free_size(MALLOC_CAP_SPIRAM),                                             \
+             (unsigned)heap_caps_get_largest_free_block(MALLOC_CAP_SPIRAM))
+
 // AI detection variables
 // static void **detect_buf;
 static vector<vector<int>> detect_bound;
@@ -106,12 +116,10 @@ bool Camera::run(void)
         _camera_init_sem = NULL;
     }
 
-    // AI detection models require ~1-2 MB of internal heap not available here.
-    // Leave detection handles NULL; the detect task skips inference when they are NULL.
-    //ped_detect = get_pedestrian_detect();
-    //assert(ped_detect != NULL);
-    //hum_detect = get_humanface_detect();
-    //assert(hum_detect != NULL);
+    // Detection models are lazy-loaded inside camera_dectect_task based on the
+    // active event-group bit. Loading both at once exhausts the ~340 KB of
+    // internal SRAM (esp-dl STL overhead lives in default heap, not PSRAM).
+    HEAP_DUMP("camera run() entry");
 
     xTaskCreatePinnedToCore((TaskFunction_t)camera_dectect_task, "Camera Detect", 1024 * 8, this, 5, &_detect_task_handle, 1);
 
@@ -402,19 +410,50 @@ static void perfmon_end(int ctr, int count)
 }
 #endif
 
+static void ensure_detect_mode(EventBits_t bits)
+{
+    const bool want_ped = (bits & CAMERA_EVENT_PED_DETECT) != 0;
+    const bool want_hum = (bits & CAMERA_EVENT_HUMAN_DETECT) != 0;
+
+    if (!want_hum && hum_detect != NULL) {
+        delete_humanface_detect();
+        hum_detect = NULL;
+        HEAP_DUMP("after free humanface");
+    }
+    if (!want_ped && ped_detect != NULL) {
+        delete_pedestrian_detect();
+        ped_detect = NULL;
+        HEAP_DUMP("after free pedestrian");
+    }
+    if (want_ped && ped_detect == NULL) {
+        HEAP_DUMP("before load pedestrian");
+        ped_detect = get_pedestrian_detect();
+        HEAP_DUMP("after  load pedestrian");
+    }
+    if (want_hum && hum_detect == NULL) {
+        HEAP_DUMP("before load humanface");
+        hum_detect = get_humanface_detect();
+        HEAP_DUMP("after  load humanface");
+    }
+}
+
 void Camera::camera_dectect_task(Camera *app)
 {
-    int res = 0;
     while (1) {
         xEventGroupWaitBits(camera_event_group, CAMERA_EVENT_TASK_RUN, pdFALSE, pdTRUE, portMAX_DELAY);
 
-        if ((xEventGroupGetBits(camera_event_group) & (CAMERA_EVENT_PED_DETECT | CAMERA_EVENT_HUMAN_DETECT))
-                && ped_detect != NULL && hum_detect != NULL) {
+        EventBits_t bits = xEventGroupGetBits(camera_event_group);
+        ensure_detect_mode(bits);
+
+        const bool ped_active = (bits & CAMERA_EVENT_PED_DETECT) && ped_detect != NULL;
+        const bool hum_active = (bits & CAMERA_EVENT_HUMAN_DETECT) && hum_detect != NULL;
+
+        if (ped_active || hum_active) {
             camera_pipeline_buffer_element *p = camera_pipeline_recv_element(feed_pipeline, portMAX_DELAY);
             if (p) {
-                if (xEventGroupGetBits(camera_event_group) & CAMERA_EVENT_PED_DETECT) {
+                if (ped_active) {
                     detect_results = app_pedestrian_detect((uint16_t *)p->buffer, app->_hor_res, app->_ver_res);
-                }  else {
+                } else {
                     detect_results = app_humanface_detect((uint16_t *)p->buffer, app->_hor_res, app->_ver_res);
                 }
 
@@ -433,8 +472,14 @@ void Camera::camera_dectect_task(Camera *app)
         }
 
         if (xEventGroupGetBits(camera_event_group) & CAMERA_EVENT_DELETE) {
-            delete_pedestrian_detect();
-            delete_humanface_detect();
+            if (ped_detect) {
+                delete_pedestrian_detect();
+                ped_detect = NULL;
+            }
+            if (hum_detect) {
+                delete_humanface_detect();
+                hum_detect = NULL;
+            }
 
             ESP_LOGI(TAG, "Camera detect task exit");
             vTaskDelete(NULL);
