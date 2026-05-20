@@ -1,0 +1,63 @@
+name: Feature request
+description: Suggest a new feature or improvement
+title: "[FEATURE] "
+type: feature
+labels: ["enhancement"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for your suggestion. Please describe the problem, use case and expected benefit.
+
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: What problem are you trying to solve, or what opportunity do you want to address?
+      placeholder: "Example: I would like to configure the device over BLE ..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: Describe the requested feature or improvement.
+    validations:
+      required: true
+
+  - type: textarea
+    id: use-case
+    attributes:
+      label: Use case
+      description: Explain how this would be used in practice.
+      placeholder: "Example: during field commissioning of a device ..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Have you already considered other solutions?
+    validations:
+      required: false
+
+  - type: textarea
+    id: expected-impact
+    attributes:
+      label: Expected impact
+      description: What benefit would this bring to users, developers or the product?
+      placeholder: "Example: reduced installation time, fewer configuration errors ..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional-notes
+    attributes:
+      label: Additional notes
+      description: Add links, mockups, screenshots or technical details.
+    validations:
+      required: false
