@@ -1,158 +1,86 @@
-| Supported Targets | ESP32 | ESP32-P4 |
-| ----------------- | ----- | -------- |
+# Scintix P4 — Ethernet iperf (console over USB Serial/JTAG)
 
-# Ethernet iperf Example on USB Serial JTAG - Tested on ESP-IDF 6.0.1
+> Target: **ESP32-P4** · Tested on **ESP-IDF v6.0.1**
 
-This example is configured to output the console trace via **USB Serial JTAG**, available through the micro USB port on the CM4 carrier board.
+Measures Ethernet throughput/bandwidth on the Scintix P4 using the [iperf](https://iperf.fr/) protocol, driven from an interactive console (REPL). Traffic goes through the Scintix P4 **on-board Ethernet PHY (Microchip KSZ8091RNACA)** — no external Ethernet board is needed, just an RJ45 connection on a carrier that routes the MAC/PHY pins.
 
-## Overview
+This variant prints the console over **USB Serial/JTAG**. A twin example, [`rm-cmp4_eth_iperf_u0`](../rm-cmp4_eth_iperf_u0), is identical but routes the console to UART0 — pick whichever matches your wiring.
 
-This example demonstrates basic usage of [iperf](https://iperf.fr/) protocol to measure the throughout/bandwidth of Ethernet.
+It is based on the Espressif [Ethernet iperf](https://github.com/espressif/esp-idf/tree/release/v6.0/examples/ethernet/iperf) example.
 
-The cli environment in the example is based on the [console component](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/console.html).
+## Console output
 
-## How to use example
+This example is configured to print the console trace over **USB Serial/JTAG**. Because the Ethernet RJ45 requires a carrier, use the carrier's serial/JTAG port (on the Raspberry Pi CM4 carrier this is the micro-USB); the module's native USB-C exposes the same interface when it is reachable. The REPL is initialized on the USB Serial/JTAG controller accordingly (see *Differences* below).
 
-### Hardware Required
+## Hardware required
 
-To run this example, it's recommended that you have an official ESP32 Ethernet development board - [ESP32-Ethernet-Kit](https://docs.espressif.com/projects/esp-idf/en/latest/hw-reference/get-started-ethernet-kit.html). This example should also work for 3rd party ESP32 board as long as it's integrated with a supported Ethernet PHY chip. Espressif supports multiple Ethernet PHYs. The full list of supported PHYs is available at [esp-eth-drivers](https://github.com/espressif/esp-eth-drivers) repository. If your PHY is IEEE 802.3 compliant, you can use `Generic PHY` driver for most use cases.
+* A Scintix P4 module on a CM4/CM5 carrier that exposes the on-board Ethernet (RJ45). *Tested on the Raspberry Pi CM4 IO board.*
+* A USB-C cable for power and programming.
+* A PC on the same network, with the `iperf` tool installed.
 
-Besides that, `esp_eth` component can drive third-party Ethernet module which integrates MAC and PHY and provides common communication interface (e.g. SPI, USB, etc). The full list of supported SPI Ethernet modules is also available at [esp-eth-drivers](https://github.com/espressif/esp-eth-drivers) repository.
+## Software tools preparation
 
-> [!NOTE]
-> `Generic 802.3 PHY` basic functionality should always work for PHY compliant with IEEE 802.3. However, some specific features might be limited. A typical example is loopback functionality, where certain PHYs may require setting a specific speed mode to operate correctly. If this is a case, use driver tailored to that specific chip.
+Install **iperf 2.x** on the PC (iperf3 is not fully compatible):
 
-### Software Tools Preparation
+* Debian/Ubuntu: `sudo apt-get install iperf`
+* macOS: `brew install iperf` (Homebrew) or `sudo port install iperf` (MacPorts)
+* Windows (MSYS2): binaries from [SourceForge](https://sourceforge.net/projects/iperf2/)
 
-1. Install iperf2 tool on PC (iperf3 not fully supported) 
-   * Debian/Ubuntu: `sudo apt-get install iperf`
-   * macOS: `brew install iperf`(if using Homebrew) or `sudo port install iperf`(if using MacPorts)
-   * Windows(MSYS2): Downloads binaries from [here](https://sourceforge.net/projects/iperf2/)
+## Configure, build, flash
 
-### Configure the project
-
-```
-idf.py menuconfig
-```
-
-In addition to the common configurations for Ethernet examples from [upper level](../README.md#common-configurations), you might also need to update the default value of following configurations:
-
-1. In the `Example Configuration` menu:
-    * Enable storing history commands in flash under `Store command history in flash`.
-
-### Build, Flash, and Run
-
-Build the project and flash it to the board, then run monitor tool to view serial output:
+Optionally enable *Store command history in flash* under *Example Configuration* in `idf.py menuconfig` (the example ships with a FAT `storage` partition for this).
 
 ```
-idf.py -p PORT build flash monitor
+idf.py set-target esp32p4
+idf.py -p PORT flash monitor
 ```
 
-(Replace PORT with the name of the serial port to use.)
+To exit the monitor, press `Ctrl-]`.
 
-(To exit the serial monitor, type ``Ctrl-]``.)
+## Example output
 
-See the [Getting Started Guide](https://docs.espressif.com/projects/esp-idf/en/latest/get-started/index.html) for full steps to configure and use ESP-IDF to build projects.
+### Uplink (ESP → PC)
 
-## Example Output
+* PC: `iperf -u -s -i 3`
+* Scintix P4: `iperf -u -c PC_IP -i 3 -t 30`
 
-### Test uplink bandwidth
-
-* PC: run command: `iperf -u -s -i 3` to start iperf server in UDP mode, and report interval is 3 seconds.
-* ESP32: run command: `iperf -u -c PC_IP -i 3 -t 30` to start iperf client in UDP mode, and the test will last 30 seconds.
-
-#### PC output
-
-```bash
-------------------------------------------------------------
-Server listening on UDP port 5001
-Receiving 1470 byte datagrams
-UDP buffer size:  208 KByte (default)
-------------------------------------------------------------
-[  3] local 192.168.2.160 port 5001 connected with 192.168.2.156 port 49154
-[ ID] Interval       Transfer     Bandwidth        Jitter   Lost/Total Datagrams
-[  3]  0.0- 3.0 sec  26.1 MBytes  72.8 Mbits/sec   0.198 ms    1/18585 (0.0054%)
-[  3]  3.0- 6.0 sec  26.3 MBytes  73.7 Mbits/sec   0.192 ms    0/18792 (0%)
-[  3]  6.0- 9.0 sec  26.3 MBytes  73.5 Mbits/sec   0.189 ms    0/18741 (0%)
-[  3]  9.0-12.0 sec  26.2 MBytes  73.3 Mbits/sec   0.191 ms   43/18739 (0.23%)
-[  3] 12.0-15.0 sec  26.3 MBytes  73.5 Mbits/sec   0.194 ms    0/18739 (0%)
-[  3] 15.0-18.0 sec  26.3 MBytes  73.5 Mbits/sec   0.191 ms    0/18741 (0%)
-[  3] 18.0-21.0 sec  26.3 MBytes  73.5 Mbits/sec   0.187 ms    0/18752 (0%)
-[  3] 21.0-24.0 sec  26.3 MBytes  73.4 Mbits/sec   0.192 ms    0/18737 (0%)
-[  3] 24.0-27.0 sec  26.3 MBytes  73.5 Mbits/sec   0.188 ms    0/18739 (0%)
 ```
-
-#### ESP32 output
-
-```bash
 mode=udp-client sip=192.168.2.156:5001, dip=192.168.2.160:5001, interval=3, time=30
     Interval           Bandwidth
    0-   3 sec       72.92 Mbits/sec
-   3-   6 sec       73.76 Mbits/sec
-   6-   9 sec       73.56 Mbits/sec
-   9-  12 sec       73.56 Mbits/sec
-  12-  15 sec       73.56 Mbits/sec
-  15-  18 sec       73.56 Mbits/sec
-  18-  21 sec       73.61 Mbits/sec
-  21-  24 sec       73.55 Mbits/sec
-  24-  27 sec       73.56 Mbits/sec
-  27-  30 sec       73.56 Mbits/sec
+   ...
    0-  30 sec       73.52 Mbits/sec
 ```
 
-### Test downlink bandwidth
+### Downlink (PC → ESP)
 
-* PC: run command: `iperf -u -c ESP_IP -b 80M -t 30 -i 3` to start iperf client in UDP mode with estimated bandwidth 100M, and report interval is 3 seconds.
-* ESP32: run command: `iperf -u -s -t 30 -i 3` to start iperf server in UDP mode, and the test will last 30 seconds.
+* PC: `iperf -u -c ESP_IP -b 80M -t 30 -i 3`
+* Scintix P4: `iperf -u -s -t 30 -i 3`
 
-#### PC output
-```bash
-------------------------------------------------------------
-Client connecting to 192.168.2.156, UDP port 5001
-Sending 1470 byte datagrams
-UDP buffer size:  208 KByte (default)
-------------------------------------------------------------
-[  3] local 192.168.2.160 port 59581 connected with 192.168.2.156 port 5001
-[ ID] Interval       Transfer     Bandwidth
-[  3]  0.0- 3.0 sec  28.6 MBytes  80.0 Mbits/sec
-[  3]  3.0- 6.0 sec  28.6 MBytes  80.0 Mbits/sec
-[  3]  6.0- 9.0 sec  28.6 MBytes  80.0 Mbits/sec
-[  3]  9.0-12.0 sec  28.6 MBytes  80.0 Mbits/sec
-[  3] 12.0-15.0 sec  28.4 MBytes  79.5 Mbits/sec
-[  3] 15.0-18.0 sec  28.6 MBytes  79.9 Mbits/sec
-[  3] 18.0-21.0 sec  28.6 MBytes  79.9 Mbits/sec
-[  3] 21.0-24.0 sec  28.6 MBytes  79.9 Mbits/sec
-[  3] 24.0-27.0 sec  28.6 MBytes  80.0 Mbits/sec
-[  3] 27.0-30.0 sec  28.5 MBytes  79.7 Mbits/sec
-[  3]  0.0-30.0 sec   286 MBytes  79.9 Mbits/sec
 ```
-
-#### ESP32 output
-```bash
 mode=udp-server sip=192.168.2.156:5001, dip=0.0.0.0:5001, interval=3, time=30
     Interval           Bandwidth
-I (2534456) iperf: want recv=16384
    0-   3 sec       79.36 Mbits/sec
-   3-   6 sec       79.56 Mbits/sec
-   6-   9 sec       79.51 Mbits/sec
-   9-  12 sec       79.24 Mbits/sec
-  12-  15 sec       77.33 Mbits/sec
-  15-  18 sec       79.01 Mbits/sec
-  18-  21 sec       78.58 Mbits/sec
-  21-  24 sec       78.24 Mbits/sec
-  24-  27 sec       79.56 Mbits/sec
-  27-  30 sec       77.20 Mbits/sec
+   ...
    0-  30 sec       78.76 Mbits/sec
 ```
 
-## Suggestions of getting higher bandwidth
+## Tips for higher bandwidth
 
-1. Higher MCU working frequency will get higher bandwidth.
-2. Put frequently invoked functions into IRAM via macro `IRAM_ATTR` in code. Note that the lwIP IRAM optimization is already enabled by default.
-3. Priority of iperf task may also have effect.
+1. A higher MCU clock yields higher bandwidth.
+2. Move hot functions to IRAM with `IRAM_ATTR` (lwIP IRAM optimization is already enabled by default).
+3. The iperf task priority can also matter.
 
-## Troubleshooting
+## Differences from the upstream Espressif example
 
-See common troubleshooting for Ethernet examples from [upper level](../README.md#common-troubleshooting).
-
-(For any technical queries, please open an [issue](https://github.com/espressif/esp-idf/issues) on GitHub. We will get back to you as soon as possible.)
+* `main/ethernet_iperf_main.c`: the console REPL initialization is made **conditional** on the selected console channel, so the same source builds for either UART or USB Serial/JTAG:
+  ```c
+  #if CONFIG_ESP_CONSOLE_UART_DEFAULT || CONFIG_ESP_CONSOLE_UART_CUSTOM
+      esp_console_dev_uart_config_t uart_config = ESP_CONSOLE_DEV_UART_CONFIG_DEFAULT();
+      ESP_ERROR_CHECK(esp_console_new_repl_uart(&uart_config, &repl_config, &repl));
+  #elif CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG
+      esp_console_dev_usb_serial_jtag_config_t jtag_config = ESP_CONSOLE_DEV_USB_SERIAL_JTAG_CONFIG_DEFAULT();
+      ESP_ERROR_CHECK(esp_console_new_repl_usb_serial_jtag(&jtag_config, &repl_config, &repl));
+  #endif
+  ```
+* `sdkconfig.defaults`: console routed to USB Serial/JTAG (`CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG=y`).

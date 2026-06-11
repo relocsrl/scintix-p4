@@ -1,125 +1,63 @@
-| Supported Targets | ESP32-H4 | ESP32-P4 | ESP32-S2 | ESP32-S3 | ESP32-S31 |
-| ----------------- | -------- | -------- | -------- | -------- | --------- |
+# Scintix P4 — USB Mass Storage (host)
 
-# USB Mass Storage Class example - Tested on ESP-IDF 6.0.1
+> Target: **ESP32-P4** · Tested on **ESP-IDF v6.0.1**
 
-## Overview
+This example turns the Scintix P4 into a **USB host** and demonstrates the MSC (Mass Storage Class) driver against a USB flash drive. The ESP32-P4 USB 2.0 OTG controller is routed to the host port of the CM4/CM5 carrier, so a stock CM4 carrier board (or its USB hub) can be used directly.
 
-This example demonstrates usage of the MSC (Mass Storage Class) to access storage on a USB flash drive. Upon connection of the flash drive, it is mounted to the Virtual filesystem. The following example operations are then performed:
+On connection, the drive is mounted to the virtual filesystem and the example:
 
-1. Print device info (capacity, sectors size, and count...).
-2. List all folders and files in the root directory of the USB flash drive.
-3. Create `esp` subdirectory (if not present already), as well as a `test.txt` file.
-4. Run read/write benchmarks by transferring 1 MB of data to a `dummy` file.
+1. Prints the device descriptor and info (capacity, sector size and count, VID/PID…).
+2. Lists all folders and files in the root directory.
+3. Creates an `esp` subdirectory (if missing) and a `test.txt` file.
+4. Runs read/write benchmarks by transferring 1 MB to a `dummy` file.
 
-> Note 1: This example currently supports only FAT-formatted drives. Other file systems, such as exFAT or NTFS, are not compatible with this example. Please ensure that your USB drive is formatted as FAT to avoid compatibility issues.
+It is based on the Espressif [USB Host MSC](https://github.com/espressif/esp-idf/tree/release/v6.0/examples/peripherals/usb/host/msc) example, with small task-priority adjustments for hubbed carriers (see *Differences* below).
 
-> Note 2: When using a USB hub(like in the Raspberry CM4 IO carrier board), ensure that `usb_task` priority is set higher than the MSC background task priority. Inverting these values can cause enumeration failures on downstream hub ports due to delayed handling of USB host events during the port reset/chirp detection phase.
+> **Note:** Only FAT-formatted drives are supported. exFAT/NTFS will not mount.
 
-> Note 3: When running this example, use the UART0 6-pin programmer connector for debug trace. The USB-to-serial interface exposed by the carrier board is not available while the USB Host driver is active.
+## Hardware required
 
-### USB Reconnections
+* A Scintix P4 module on a CM4/CM5 carrier board with a USB host port. *Tested on the Raspberry Pi CM4 IO board.*
+* A USB flash drive (FAT-formatted).
+* A USB cable for power and programming.
 
-The example is run in a loop so that it can demonstrate USB connection and reconnection handling. If you want to deinitialize the entire USB Host Stack, you can short GPIO0 to GND. GPIO0 is usually mapped to a BOOT button, thus pressing the button will deinitialize the stack.
+## Console output
 
-### Hardware Required
+> **Use the UART0 6-pin programmer connector on the Scintix P4 for the debug trace.** The USB-to-serial interface exposed by the carrier board is **not** available while the USB Host driver is active, because the USB controller is busy driving the flash drive.
 
-* Development board with USB-OTG support
-* A USB cable for power supply and programming
-* A USB flash drive
+### USB reconnections
 
-### USB Host Limitations
+The example runs in a loop to demonstrate connect/reconnect handling. Short **GPIO0** to GND (usually the BOOT button) to deinitialize the whole USB Host stack.
 
-#### ESP32-S2 & ESP32-S3
-The USB OTG peripheral on ESP32-S2 and ESP32-S3 in host mode supports **up to 8 bidirectional endpoints**. Each of these endpoints can be configured as either IN or OUT.
+## USB host limitations
 
-Since each USB Mass Storage Class (MSC) device typically requires **3 endpoints** (Control, BULK IN, and BULK OUT), and USB hubs also consume endpoints (Control, INTERRUPT IN), this limits the theoretical maximum number of connected MSC devices to **2**.
+### ESP32-P4
+The ESP32-P4 USB 2.0 OTG controller supports **up to 16 bidirectional endpoints** in host mode. Since each MSC device typically needs **3 endpoints** (Control, BULK IN, BULK OUT) and a hub also consumes endpoints, the theoretical maximum is **4 connected MSC devices**.
 
-#### ESP32-P4
-ESP32-P4 features a more advanced USB 2.0 OTG controller with **up to 16 bidirectional endpoints** in host mode. Given the same endpoint requirements per device, the theoretical maximum number of connected MSC devices is **4**.
+For reference, ESP32-S2/S3 support only 8 endpoints (max 2 devices).
 
-### Example Limitations
-The number of simultaneously connected MSC devices is now **determined by `CONFIG_FATFS_VOLUME_COUNT`**. This ensures consistency with the FAT filesystem configuration and prevents misalignment between the MSC device count and the available FAT volumes.
+### Number of simultaneous devices
+The number of simultaneously mounted MSC devices is determined by `CONFIG_FATFS_VOLUME_COUNT` (default **2**). Increase it via `idf.py menuconfig` → *Component config* → *FAT Filesystem support* → *Number of FATFS volumes*, keeping endpoint and memory constraints in mind.
 
-By default, `CONFIG_FATFS_VOLUME_COUNT` is set to **2**, meaning that up to **2 MSC devices** can be connected at the same time. If your application requires more devices, you can increase `CONFIG_FATFS_VOLUME_COUNT` accordingly, while keeping in mind **endpoint and memory constraints**.
-
-#### How to configure `CONFIG_FATFS_VOLUME_COUNT` in menuconfig:
-To change the maximum number of MSC devices, adjust `CONFIG_FATFS_VOLUME_COUNT` in **menuconfig**:
-idf.py menuconfig → Component config → FAT Filesystem support → Number of FATFS volumes
-Set this value to the desired number of MSC devices, ensuring it aligns with USB endpoint availability.
-
-### Common Pin Assignments
-
-Follow instructions in [examples/usb/README.md](../../README.md) for specific hardware setup.
-
-Additionally, GPIO0 can be shorted to ground in order to deinitialize the USB stack.
-
-### Build and Flash
-
-Build the project and flash it to the board, then run monitor tool to view serial output:
+## Build, flash and monitor
 
 ```
+idf.py set-target esp32p4
 idf.py -p PORT flash monitor
 ```
 
-(To exit the serial monitor, type ``Ctrl-]``.)
+To exit the monitor, press `Ctrl-]`.
 
-See the Getting Started Guide for full steps to configure and use ESP-IDF to build projects.
-
-## Example Output
+## Example output
 
 ```
-...
 I (323) example: Waiting for USB flash drive to be connected
 I (3353) example: MSC device connected (usb_addr=3)
 *** Device descriptor ***
 bLength 18
 bDescriptorType 1
 bcdUSB 2.00
-bDeviceClass 0x0
-bDeviceSubClass 0x0
-bDeviceProtocol 0x0
-bMaxPacketSize0 64
-idVendor 0xabcd
-idProduct 0x1234
-bcdDevice 1.00
-iManufacturer 1
-iProduct 2
-iSerialNumber 3
-bNumConfigurations 1
-*** Configuration descriptor ***
-bLength 9
-bDescriptorType 2
-wTotalLength 32
-bNumInterfaces 1
-bConfigurationValue 1
-iConfiguration 0
-bmAttributes 0x80
-bMaxPower 100mA
-        *** Interface descriptor ***
-        bLength 9
-        bDescriptorType 4
-        bInterfaceNumber 0
-        bAlternateSetting 0
-        bNumEndpoints 2
-        bInterfaceClass 0x8
-        bInterfaceSubClass 0x6
-        bInterfaceProtocol 0x50
-        iInterface 0
-                *** Endpoint descriptor ***
-                bLength 7
-                bDescriptorType 5
-                bEndpointAddress 0x1    EP 1 OUT
-                bmAttributes 0x2        BULK
-                wMaxPacketSize 512
-                bInterval 0
-                *** Endpoint descriptor ***
-                bLength 7
-                bDescriptorType 5
-                bEndpointAddress 0x81   EP 1 IN
-                bmAttributes 0x2        BULK
-                wMaxPacketSize 512
-                bInterval 0
+...
 Device info:
          Capacity: 3839 MB
          Sector size: 512
@@ -128,16 +66,15 @@ Device info:
          VID: 0xABCD
          iProduct: UDisk
          iManufacturer: General
-         iSerialNumber:
-I (3763) example: ls command output for all connected devices:
 I (3763) example: Listing contents of /usb0
 /usb0/SYSTEM~1
 /usb0/ESP
-I (3773) example: Reading file
 I (3773) example: Read from file '/usb0/esp/test.txt': 'Hello World!'
-I (3803) example: Writing to file /usb0/esp/dummy
 I (3943) example: Write speed 7.16 MiB/s
-I (3953) example: Reading from file /usb0/esp/dummy
 I (4093) example: Read speed 7.16 MiB/s
 I (4103) example: Example finished, you can disconnect the USB flash drive (or connect another USB flash drive)
 ```
+
+## Differences from the upstream Espressif example
+
+* `main/msc_example_main.c`: task priorities adjusted for hubbed CM4 carriers — `usb_task` raised from **2 → 5** and the MSC background task lowered from **5 → 4**. When a USB hub is present (as on the Raspberry Pi CM4 IO carrier board), the host event task must out-prioritize the MSC background task, otherwise downstream hub ports can fail enumeration during the port reset / chirp-detection phase.

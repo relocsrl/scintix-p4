@@ -1,51 +1,36 @@
-| Supported Targets | ESP32 | ESP32-C2 | ESP32-C3 | ESP32-C5 | ESP32-C6 | ESP32-C61 | ESP32-H2 | ESP32-H21 | ESP32-H4 | ESP32-P4 | ESP32-S2 | ESP32-S3 | ESP32-S31 | Linux |
-| ----------------- | ----- | -------- | -------- | -------- | -------- | --------- | -------- | --------- | -------- | -------- | -------- | -------- | --------- | ----- |
+# Scintix P4 — Hello World
 
-# Hello World Example - Tested on ESP-IDF 6.0.1
+> Target: **ESP32-P4** · Tested on **ESP-IDF v6.0.1**
 
-Starts a FreeRTOS task to print "Hello World".
+The simplest possible starting point for the Scintix P4. It starts a FreeRTOS task that prints `Hello World!`, the chip/revision information and a reboot countdown to the console — a quick way to confirm that your toolchain, board and serial connection all work before moving on to the other examples.
 
-## How to use example
+This is the unmodified Espressif [`hello_world`](https://github.com/espressif/esp-idf/tree/release/v6.0/examples/get-started/hello_world) example, configured for the Scintix P4 (`esp32p4` target).
 
-Follow detailed instructions provided specifically for this example.
+## Hardware required
 
-Select the instructions depending on Espressif chip installed on your development board:
+* A Scintix P4 module.
+* A USB-C cable for power and programming (standalone), **or** the module plugged into a CM4/CM5 carrier board.
 
-- [ESP32 Getting Started Guide](https://docs.espressif.com/projects/esp-idf/en/stable/get-started/index.html)
-- [ESP32-S2 Getting Started Guide](https://docs.espressif.com/projects/esp-idf/en/latest/esp32s2/get-started/index.html)
+## Console output
 
+The console is printed over the standard ESP-IDF channel. On the Scintix P4 you have two physical options:
 
-## Example folder contents
+* **UART0** — exposed on the 6-pin programmer connector directly on the Scintix P4 board.
+* **USB Serial/JTAG** — the module's native USB-C port, or a carrier's micro-USB/USB-C when the module is mounted on one (e.g. the Raspberry Pi CM4 carrier).
 
-The project **hello_world** contains one source file in C language [hello_world_main.c](main/hello_world_main.c). The file is located in folder [main](main).
+Select the active channel with `idf.py menuconfig` → *Component config* → *ESP System Settings* → *Channel for console output*.
 
-ESP-IDF projects are built using CMake. The project build configuration is contained in `CMakeLists.txt` files that provide set of directives and instructions describing the project's source files and targets (executable, library, or both).
-
-Below is short explanation of remaining files in the project folder.
+## Build, flash and monitor
 
 ```
-├── CMakeLists.txt
-├── pytest_hello_world.py      Python script used for automated testing
-├── main
-│   ├── CMakeLists.txt
-│   └── hello_world_main.c
-└── README.md                  This is the file you are currently reading
+idf.py set-target esp32p4
+idf.py -p PORT flash monitor
 ```
 
-For more information on structure and contents of ESP-IDF projects, please refer to Section [Build System](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/build-system.html) of the ESP-IDF Programming Guide.
+Replace `PORT` with your serial port (e.g. `COM5` on Windows, `/dev/ttyUSB0` on Linux). To exit the monitor, press `Ctrl-]`.
 
-## Troubleshooting
+See the [ESP-IDF Getting Started Guide](https://docs.espressif.com/projects/esp-idf/en/latest/esp32p4/get-started/index.html) for the full toolchain setup.
 
-* Program upload failure
+## Differences from the upstream Espressif example
 
-    * Hardware connection is not correct: run `idf.py -p PORT monitor`, and reboot your board to see if there are any output logs.
-    * The baud rate for downloading is too high: lower your baud rate in the `menuconfig` menu, and try again.
-
-## Technical support and feedback
-
-Please use the following feedback channels:
-
-* For technical queries, go to the [esp32.com](https://esp32.com/) forum
-* For a feature request or bug report, create a [GitHub issue](https://github.com/espressif/esp-idf/issues)
-
-We will get back to you as soon as possible.
+None at the source level — only the build configuration targets `esp32p4`.
