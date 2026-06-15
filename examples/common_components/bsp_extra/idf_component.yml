@@ -4,6 +4,11 @@ dependencies:
 
   espressif/esp32_p4_function_ev_board_noglib:
     version: "5.2.*"
+    # Use the vendored, Scintix-patched copy instead of the registry one.
+    # The ES8311 audio-codec init is disabled there: the Scintix P4 + Waveshare
+    # carrier has no codec, and the upstream assert(es8311_dev) aborts at boot
+    # (black screen). The local copy returns NULL gracefully instead.
+    override_path: "../esp32_p4_function_ev_board_noglib"
 
   chmorgan/esp-audio-player:
     version: "1.0.*"

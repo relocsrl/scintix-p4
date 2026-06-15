@@ -110,6 +110,15 @@ If you ever see INTERNAL `largest` drop near or below the size of a model's meta
 - Face detection requires both `MSR` and `MNP` to be resident in PSRAM during inference (they are chained in `MSRMNP::run`), so its peak footprint is higher than pedestrian's.
 - Loading a model on a long-running session may fail due to internal-heap fragmentation rather than total size. The `HEAP_DUMP` traces above help distinguish the two failure modes.
 
+### Board BSP — audio codec disabled (vendored component)
+
+The upstream `espressif/esp32_p4_function_ev_board_noglib` BSP calls `assert(es8311_dev)` in `bsp_audio_codec_speaker_init()`. The Scintix P4 + Waveshare carrier has **no ES8311 codec**, so that assert aborts at boot and the screen stays black. To fix this, the BSP is **vendored** (a local, committed copy) with the audio-codec init disabled — it returns `NULL` gracefully instead of asserting.
+
+- Local copy: [`../common_components/esp32_p4_function_ev_board_noglib`](../common_components/esp32_p4_function_ev_board_noglib)
+- It is selected via `override_path` in [`../common_components/bsp_extra/idf_component.yml`](../common_components/bsp_extra/idf_component.yml), so the registry version is **not** downloaded.
+
+> Because it's vendored, this BSP no longer auto-updates. To pull a newer upstream BSP, re-copy it and re-apply the audio change.
+
 ### Partition table
 
 The example uses a 9 MB `factory` app partition and a 4 MB `storage` SPIFFS partition (see [partitions.csv](partitions.csv)) to hold the firmware, the bundled AI models and the SPIFFS assets (music, game sounds).
