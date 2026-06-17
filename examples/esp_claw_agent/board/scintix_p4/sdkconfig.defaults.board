@@ -1,0 +1,51 @@
+# Scintix P4 board defaults (ESP32-P4 + ESP32-C6 on Waveshare CM4-to-Pi4).
+# Derived from espressif/esp32_p4_function_ev.
+
+#
+# Flash & PSRAM — Scintix P4 has 32 MB NOR flash and 32 MB hex PSRAM @ 250 MHz.
+#
+CONFIG_ESPTOOLPY_FLASHMODE_QIO=y
+CONFIG_ESPTOOLPY_FLASHFREQ_40M=y
+CONFIG_ESPTOOLPY_FLASHSIZE_32MB=y
+CONFIG_SPIRAM=y
+CONFIG_SPIRAM_MODE_HEX=y
+CONFIG_SPIRAM_SPEED_250M=y
+
+# Scintix P4 is silicon rev v3.1 — do NOT select the pre-v3 workaround.
+# CONFIG_ESP32P4_SELECTS_REV_LESS_V3 is not set
+
+#
+# Wi-Fi / BT via the on-board ESP32-C6 over SDIO (esp_hosted).
+# The C6 SDIO wiring matches the ESP32-P4-Function-EV-Board reference layout
+# (CLK 18 / CMD 19 / D0-D3 14-17, reset 54); set explicitly here ("P4 dev board: NONE")
+# instead of via the func-board preset. Validated on the esp_brookesia_phone example.
+#
+CONFIG_ESP_HOSTED_ENABLED=y
+CONFIG_ESP_HOSTED_CP_TARGET_ESP32C6=y
+CONFIG_ESP_HOSTED_IDF_SLAVE_TARGET="esp32c6"
+CONFIG_ESP_HOSTED_P4_DEV_BOARD_NONE=y
+CONFIG_ESP_HOSTED_SDIO_HOST_INTERFACE=y
+CONFIG_ESP_HOSTED_SDIO_SLOT_1=y
+CONFIG_ESP_HOSTED_SDIO_4_BIT_BUS=y
+CONFIG_ESP_HOSTED_SDIO_CLOCK_FREQ_KHZ=40000
+CONFIG_ESP_HOSTED_SDIO_RESET_ACTIVE_HIGH=y
+CONFIG_ESP_HOSTED_PRIV_SDIO_PIN_CMD_SLOT_1=19
+CONFIG_ESP_HOSTED_PRIV_SDIO_PIN_CLK_SLOT_1=18
+CONFIG_ESP_HOSTED_PRIV_SDIO_PIN_D0_SLOT_1=14
+CONFIG_ESP_HOSTED_PRIV_SDIO_PIN_D1_4BIT_BUS_SLOT_1=15
+CONFIG_ESP_HOSTED_PRIV_SDIO_PIN_D2_4BIT_BUS_SLOT_1=16
+CONFIG_ESP_HOSTED_PRIV_SDIO_PIN_D3_4BIT_BUS_SLOT_1=17
+CONFIG_ESP_HOSTED_SDIO_GPIO_RESET_SLAVE=54
+
+# If the Camera app / esp-dl ever throws std::bad_alloc together with esp_hosted,
+# switch the heap paradigm as documented for the esp_brookesia_phone example:
+#   # CONFIG_SPIRAM_USE_CAPS_ALLOC is not set
+#   CONFIG_SPIRAM_USE_MALLOC=y
+#   CONFIG_SPIRAM_MALLOC_RESERVE_INTERNAL=32768
+
+#
+# ESP-Claw demo: expose the board over MCP so an external client (e.g. Claude)
+# can ask the agent to drive the screen via the "scintix_display" skill.
+# cap_mcp_server is on by default.
+#
+CONFIG_APP_CLAW_CAP_MCP_SERVER=y

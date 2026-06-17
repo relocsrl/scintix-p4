@@ -1,0 +1,48 @@
+version: 1.0.0
+# Peripherals Configuration for the Scintix P4 (ESP32-P4 + ESP32-C6)
+# on a Waveshare CM4-to-Pi4 adapter.
+#
+# Derived from espressif/esp32_p4_function_ev. Audio (ES8311 / I2S) is omitted
+# because the Waveshare carrier has no on-board codec; add it back if your
+# carrier provides one.
+peripherals:
+  # I2C (used by the GT911 touch controller). Same pins as the P4 reference design.
+  - name: i2c_master
+    type: i2c
+    role: master
+    config:
+      port: 0
+      pins:
+        sda: 7
+        scl: 8
+
+  # LDO for MIPI power supply, must be initialized before MIPI.
+  - name: ldo_mipi
+    type: ldo
+    config:
+      chan_id: 3        # VO3_LDO powers the MIPI PHY.
+      voltage_mv: 2500  # MIPI operating voltage 2.5 V.
+      adjustable: 1
+      owned_by_hw: 0
+
+  # DSI display bus
+  - name: dsi_display
+    type: dsi
+    config:
+      bus_id: 0
+      data_lanes: 2
+      phy_clk_src: 0
+      lane_bit_rate_mbps: 1000
+
+  # Backlight control.
+  # Scintix routes the panel backlight/PWM to ESP32-P4 GPIO3
+  # (exposed on the Waveshare 40-pin header as GPIO27).
+  - name: ledc_backlight
+    type: ledc
+    version: default
+    config:
+      gpio_num: 3
+      speed_mode: LEDC_LOW_SPEED_MODE
+      channel: 1
+      timer_sel: 1
+      duty: 0

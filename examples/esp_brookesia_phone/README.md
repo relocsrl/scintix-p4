@@ -35,7 +35,7 @@ The **GT911 touch** controller shares the panel's I2C bus and is carried on the 
 - Connect the **display** FPC to the Waveshare **display** connector and the **camera** FPC to the **camera** connector.
 - The FPCs are keyed and only fit one way: the side **without** contacts carries a **blue plastic stiffener**, and the mating connectors expose contacts on one side only. Insert each cable with the blue stripe facing the contactless side of the connector.
 
-Then power and program the board over its USB-C / programmer connector.
+Power the board via the carrier (or the on-board USB-C). **Flash and view the serial console via the 6-pin Espressif programmer header on the Scintix P4** — on the Waveshare carrier the USB-C is **power-only**; to use the module's native USB-C for flashing you'd have to detach the Scintix from the carrier first.
 
 ## ESP-IDF version
 

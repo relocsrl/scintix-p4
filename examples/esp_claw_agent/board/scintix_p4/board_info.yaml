@@ -1,0 +1,4 @@
+board: scintix_p4
+chip: esp32p4
+description: "Scintix P4 (ESP32-P4 + ESP32-C6) on Waveshare CM4-to-Pi4 adapter"
+manufacturer: "Reloc"
