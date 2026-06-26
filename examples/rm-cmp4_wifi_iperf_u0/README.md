@@ -14,13 +14,15 @@ It is based on the Espressif [Wi-Fi iperf](https://github.com/espressif/esp-idf/
 
 ## Console output
 
-This example is configured to print the console trace over **UART0**, available through the **6-pin programmer connector directly on the Scintix P4 board**.
+This example is configured to print the console trace over **UART0**, available through the **6-pin programmer header next to the ESP32-P4** (the board has a second 6-pin header next to the ESP32-C6, for the Wi-Fi firmware — see [which header is which](../../esp32c6_wifi_firmware/README.md#which-6-pin-header)).
 
 ## Hardware required
 
 * A Scintix P4 module — **no carrier board is required**: Wi-Fi runs on the on-board ESP32-C6 and the console stays on the module's own connector.
-* A USB-to-UART connection to the 6-pin programmer header (for power/flash/monitor).
+* An [Espressif ESP-Prog 2](https://docs.espressif.com/projects/esp-dev-kits/en/latest/other/esp-prog-2/index.html) (or the older [ESP-Prog](https://docs.espressif.com/projects/esp-dev-kits/en/latest/other/esp-prog/index.html), or any USB-to-UART adapter) on the 6-pin header next to the ESP32-P4 (for power/flash/monitor).
 * A Wi-Fi AP and a PC running `iperf` (2.x).
+
+> **ESP32-C6 Wi-Fi firmware:** Wi-Fi here runs on the on-board ESP32-C6, which needs the esp_hosted *slave* firmware. Scintix P4 modules ship with it pre-flashed, so you normally don't need to do anything. If you start from a blank C6, the binaries and instructions are in [`esp32c6_wifi_firmware/`](../../esp32c6_wifi_firmware).
 
 ## Demo (station TCP TX)
 

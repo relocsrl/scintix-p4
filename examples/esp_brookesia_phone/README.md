@@ -35,7 +35,7 @@ The **GT911 touch** controller shares the panel's I2C bus and is carried on the 
 - Connect the **display** FPC to the Waveshare **display** connector and the **camera** FPC to the **camera** connector.
 - The FPCs are keyed and only fit one way: the side **without** contacts carries a **blue plastic stiffener**, and the mating connectors expose contacts on one side only. Insert each cable with the blue stripe facing the contactless side of the connector.
 
-Power the board via the carrier (or the on-board USB-C). **Flash and view the serial console via the 6-pin Espressif programmer header on the Scintix P4** — on the Waveshare carrier the USB-C is **power-only**; to use the module's native USB-C for flashing you'd have to detach the Scintix from the carrier first.
+Power the board via the carrier (or the on-board USB-C). **Flash and view the serial console via the [Espressif ESP-Prog 2](https://docs.espressif.com/projects/esp-dev-kits/en/latest/other/esp-prog-2/index.html) (or the older [ESP-Prog](https://docs.espressif.com/projects/esp-dev-kits/en/latest/other/esp-prog/index.html)) on the 6-pin header next to the ESP32-P4** (the board has a second 6-pin header next to the ESP32-C6, for the Wi-Fi firmware — see [which header is which](../../esp32c6_wifi_firmware/README.md#which-6-pin-header)). On the Waveshare carrier the USB-C is **power-only**; to use the module's native USB-C for flashing you'd have to detach the Scintix from the carrier first.
 
 ## ESP-IDF version
 
@@ -52,6 +52,10 @@ Only **MJPEG** videos are supported. Place MJPEG files on the SD card; after ins
 ```
 ffmpeg -i INPUT.mp4 -vcodec mjpeg -q:v 2 -vf "scale=1024:600" -acodec copy OUTPUT.mjpeg
 ```
+
+## ESP32-C6 Wi-Fi firmware (usually pre-flashed)
+
+Wi-Fi on the Scintix P4 is provided by the on-board **ESP32-C6**, which runs the esp_hosted *slave* firmware — separate from the Brookesia application you flash to the P4. **Scintix P4 modules ship with it pre-flashed, so you normally don't need to touch it.** If you start from a blank C6 (or want to restore/update it), the binaries and full flashing instructions are in [`esp32c6_wifi_firmware/`](../../esp32c6_wifi_firmware) — flash them with the [Espressif ESP-Prog 2](https://docs.espressif.com/projects/esp-dev-kits/en/latest/other/esp-prog-2/index.html) (or the older [ESP-Prog](https://docs.espressif.com/projects/esp-dev-kits/en/latest/other/esp-prog/index.html)) on the 6-pin header **next to the ESP32-C6**.
 
 ## Build, flash and monitor
 

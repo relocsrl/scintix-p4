@@ -72,7 +72,7 @@ This repository ships a set of ready-to-build examples for the Scintix P4, adapt
 | [esp_brookesia_phone](examples/esp_brookesia_phone) | Android-like multimedia UI: MIPI-DSI display, MIPI-CSI camera with on-device AI, audio and Wi-Fi | — (on-screen) |
 | [esp_claw_agent](examples/esp_claw_agent) | On-device AI agent ([ESP-Claw](https://github.com/espressif/esp-claw)) with a display UI, Wi-Fi via the ESP32-C6 | — (on-screen) |
 
-> **Console output:** the Scintix P4 exposes the console either over **UART0** (the 6-pin programmer connector on the module) or over **USB Serial/JTAG** (the module's native USB-C, or a carrier's micro-USB/USB-C when mounted on one — e.g. the Raspberry Pi CM4 carrier's micro-USB). Where it matters, examples come in two variants — the `_u0` suffix selects UART0.
+> **Console output:** the Scintix P4 exposes the console either over **UART0** (the 6-pin programmer header next to the ESP32-P4) or over **USB Serial/JTAG** (the module's native USB-C, or a carrier's micro-USB/USB-C when mounted on one — e.g. the Raspberry Pi CM4 carrier's micro-USB). Where it matters, examples come in two variants — the `_u0` suffix selects UART0.
 
 ## Getting Started
 

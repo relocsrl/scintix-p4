@@ -23,7 +23,7 @@ It is based on the Espressif [USB Host MSC](https://github.com/espressif/esp-idf
 
 ## Console output
 
-> **Use the UART0 6-pin programmer connector on the Scintix P4 for the debug trace.** The USB-to-serial interface exposed by the carrier board is **not** available while the USB Host driver is active, because the USB controller is busy driving the flash drive.
+> **Use UART0 on the 6-pin programmer header next to the ESP32-P4 for the debug trace** (connect an [Espressif ESP-Prog 2](https://docs.espressif.com/projects/esp-dev-kits/en/latest/other/esp-prog-2/index.html) (or the older [ESP-Prog](https://docs.espressif.com/projects/esp-dev-kits/en/latest/other/esp-prog/index.html)); the board's second 6-pin header, next to the ESP32-C6, is only for the C6 Wi-Fi firmware — see [which header is which](../../esp32c6_wifi_firmware/README.md#which-6-pin-header)). The USB-to-serial interface exposed by the carrier board is **not** available while the USB Host driver is active, because the USB controller is busy driving the flash drive.
 
 ### USB reconnections
 

@@ -10,12 +10,12 @@ It is based on the Espressif [Ethernet iperf](https://github.com/espressif/esp-i
 
 ## Console output
 
-This example is configured to print the console trace over **UART0**, available through the **6-pin programmer connector directly on the Scintix P4 board**. Use this variant when you are connected to the module's own programmer header rather than a carrier's USB port.
+This example is configured to print the console trace over **UART0**, available through the **6-pin programmer header next to the ESP32-P4** (the board has a second 6-pin header next to the ESP32-C6, for the Wi-Fi firmware — see [which header is which](../../esp32c6_wifi_firmware/README.md#which-6-pin-header)). Use this variant when you are connected to the module's own programmer header rather than a carrier's USB port.
 
 ## Hardware required
 
 * A Scintix P4 module on a CM4/CM5 carrier that exposes the on-board Ethernet (RJ45). *Tested on the Raspberry Pi CM4 IO board.*
-* A USB-to-UART connection to the 6-pin programmer header (for power/flash/monitor).
+* An [Espressif ESP-Prog 2](https://docs.espressif.com/projects/esp-dev-kits/en/latest/other/esp-prog-2/index.html) (or the older [ESP-Prog](https://docs.espressif.com/projects/esp-dev-kits/en/latest/other/esp-prog/index.html), or any USB-to-UART adapter) on the 6-pin header next to the ESP32-P4 (for power/flash/monitor).
 * A PC on the same network, with the `iperf` tool installed.
 
 ## Software tools preparation

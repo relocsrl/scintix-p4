@@ -22,7 +22,9 @@ This example is configured to print the console trace over **USB Serial/JTAG** â
 * A USB-C cable for power and programming.
 * A Wi-Fi AP and a PC running `iperf` (2.x).
 
-> If you'd rather use UART0 on the 6-pin programmer connector, see the twin example [`rm-cmp4_wifi_iperf_u0`](../rm-cmp4_wifi_iperf_u0).
+> If you'd rather use UART0 on the 6-pin programmer header next to the ESP32-P4, see the twin example [`rm-cmp4_wifi_iperf_u0`](../rm-cmp4_wifi_iperf_u0).
+
+> **ESP32-C6 Wi-Fi firmware:** Wi-Fi here runs on the on-board ESP32-C6, which needs the esp_hosted *slave* firmware. Scintix P4 modules ship with it pre-flashed, so you normally don't need to do anything. If you start from a blank C6, the binaries and instructions are in [`esp32c6_wifi_firmware/`](../../esp32c6_wifi_firmware).
 
 ## Demo (station TCP TX)
 

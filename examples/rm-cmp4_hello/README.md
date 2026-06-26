@@ -15,7 +15,7 @@ This is the unmodified Espressif [`hello_world`](https://github.com/espressif/es
 
 The console is printed over the standard ESP-IDF channel. On the Scintix P4 you have two physical options:
 
-* **UART0** — exposed on the 6-pin programmer connector directly on the Scintix P4 board.
+* **UART0** — exposed on the 6-pin programmer header next to the ESP32-P4 (connect an [Espressif ESP-Prog 2](https://docs.espressif.com/projects/esp-dev-kits/en/latest/other/esp-prog-2/index.html) (or the older [ESP-Prog](https://docs.espressif.com/projects/esp-dev-kits/en/latest/other/esp-prog/index.html)) here). The board has a second 6-pin header next to the ESP32-C6 (for the Wi-Fi firmware) — see [which header is which](../../esp32c6_wifi_firmware/README.md#which-6-pin-header).
 * **USB Serial/JTAG** — the module's native USB-C port, or a carrier's micro-USB/USB-C when the module is mounted on one (e.g. the Raspberry Pi CM4 carrier).
 
 Select the active channel with `idf.py menuconfig` → *Component config* → *ESP System Settings* → *Channel for console output*.

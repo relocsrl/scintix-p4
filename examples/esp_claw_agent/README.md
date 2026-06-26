@@ -2,7 +2,7 @@
 
 > Target: **ESP32-P4 + ESP32-C6** · Tested on **ESP-IDF v5.5.4**
 
-[ESP-Claw](https://github.com/espressif/esp-claw) is Espressif's "chat-coding" **AI-agent runtime** for ESP32: the full sense → reason → decide → act loop runs on the chip, talking to an LLM over the network and executing local Lua. This example runs ESP-Claw on the **Scintix P4** — Wi-Fi is provided by the on-board ESP32-C6, and the agent's animated face is shown on the MIPI-DSI display. It also ships a small demo skill, **`scintix_display`**, that lets the agent (or Claude over MCP) write a full-screen message on the panel.
+[ESP-Claw](https://github.com/espressif/esp-claw) is Espressif's "chat-coding" **AI-agent runtime** for ESP32: the full sense → reason → decide → act loop runs on the chip, talking to an LLM over the network and acting through local Lua scripts (its *skills*). This example runs ESP-Claw on the **Scintix P4** — Wi-Fi comes from the on-board ESP32-C6, and the agent's face is shown on the MIPI-DSI display. It also ships a small demo skill, **`scintix_display`**, that lets the agent (or Claude over MCP) write a full-screen message on the panel.
 
 > **This is not a self-contained project.** ESP-Claw lives in its own repository and is built with the **ESP Board Manager**. What this folder ships is the **Scintix P4 board definition** ([`board/scintix_p4/`](board/scintix_p4)) and a demo **skill** ([`skills/scintix_display/`](skills/scintix_display)). You drop these into your `esp-claw` checkout and build from there.
 
@@ -11,7 +11,7 @@
 * A **Scintix P4** module (ESP32-P4 + on-board ESP32-C6 for Wi-Fi).
 * A **7" 1024×600 MIPI-DSI panel (EK79007)** + **GT911 touch**, on a **Waveshare CM4-to-Pi4 adapter** — same display setup as the [`esp_brookesia_phone`](../esp_brookesia_phone) example.
 * A 2.4 GHz Wi-Fi network with internet access (to reach the LLM endpoint).
-* **Flashing & serial console: use the Espressif 6-pin programmer on the Scintix P4 header.** On the Waveshare carrier the module's USB-C is **power-only** (same as the Brookesia example) — to flash over the module's native USB-C you'd have to detach the Scintix from the carrier first.
+* **Flashing & serial console: use the [Espressif ESP-Prog 2](https://docs.espressif.com/projects/esp-dev-kits/en/latest/other/esp-prog-2/index.html) (or the older [ESP-Prog](https://docs.espressif.com/projects/esp-dev-kits/en/latest/other/esp-prog/index.html)) on the 6-pin header next to the ESP32-P4** (the board has a second 6-pin header next to the ESP32-C6, for the Wi-Fi firmware — see [which header is which](../../esp32c6_wifi_firmware/README.md#which-6-pin-header)). On the Waveshare carrier the module's USB-C is **power-only** (same as the Brookesia example) — to flash over the module's native USB-C you'd have to detach the Scintix from the carrier first.
 
 Audio, SD card and camera are **not** included in this board definition. Add them in the board YAML if your carrier provides them.
 
@@ -30,6 +30,10 @@ Audio, SD card and camera are **not** included in this board definition. Add the
 | Devices in the board YAML | display, touch, audio, SD, camera | **display + touch only** |
 
 [`sdkconfig.defaults.board`](board/scintix_p4/sdkconfig.defaults.board) also enables the MCP server (for the Claude demo) and configures the ESP32-C6 Wi-Fi over SDIO. That C6 wiring is **not** Scintix-specific — it's the **standard Function-EV-Board reference layout** (slot 1: CLK 18 / CMD 19 / D0–D3 14–17, reset 54); the board file just sets it explicitly. I2C (SDA 7 / SCL 8), the MIPI LDO and the DSI bus are identical to the reference design too.
+
+## ESP32-C6 Wi-Fi firmware (usually pre-flashed)
+
+Wi-Fi on the Scintix P4 is provided by the on-board **ESP32-C6**, which runs the esp_hosted *slave* firmware — separate from the ESP-Claw application you flash to the P4. **Scintix P4 modules ship with it pre-flashed, so you normally don't need to touch it.** If you start from a blank C6 (or want to restore/update it), the binaries and full flashing instructions are in [`esp32c6_wifi_firmware/`](../../esp32c6_wifi_firmware) — flash them with the [Espressif ESP-Prog 2](https://docs.espressif.com/projects/esp-dev-kits/en/latest/other/esp-prog-2/index.html) (or the older [ESP-Prog](https://docs.espressif.com/projects/esp-dev-kits/en/latest/other/esp-prog/index.html)) on the 6-pin header **next to the ESP32-C6**.
 
 ## Build and flash
 
