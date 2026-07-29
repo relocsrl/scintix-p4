@@ -1,7 +1,7 @@
 ---
 {
   "name": "scintix_display",
-  "description": "Show a full-screen message on the Scintix P4 LCD, styled to match the agent's face screen.",
+  "description": "Show a full-screen message on the Scintix P4 LCD, in the agent's own dark/amber styling.",
   "metadata": {
     "cap_groups": [
       "cap_lua"

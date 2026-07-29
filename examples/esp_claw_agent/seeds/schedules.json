@@ -1,0 +1,31 @@
+[
+  {
+    "id": "news_dashboard",
+    "enabled": true,
+    "kind": "cron",
+    "cron_expr": "*/15 * * * *",
+    "event_type": "schedule",
+    "event_key": "news_dashboard",
+    "source_channel": "time",
+    "content_type": "trigger",
+    "session_policy": "trigger",
+    "text": "Refresh the news dashboard",
+    "payload_json": "{}",
+    "max_runs": 0
+  },
+  {
+    "id": "market_monitor",
+    "enabled": true,
+    "kind": "interval",
+    "start_at_ms": 1767226050000,
+    "interval_ms": 900000,
+    "event_type": "schedule",
+    "event_key": "market_monitor",
+    "source_channel": "time",
+    "content_type": "trigger",
+    "session_policy": "trigger",
+    "text": "Refresh the market price monitor",
+    "payload_json": "{}",
+    "max_runs": 0
+  }
+]

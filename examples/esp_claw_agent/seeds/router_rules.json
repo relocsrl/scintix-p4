@@ -1,0 +1,102 @@
+[
+  {
+    "id": "news_dashboard",
+    "description": "Every 15 minutes, search current news for the configured topic (AI/tech by default) and show the headlines on the display.",
+    "enabled": true,
+    "consume_on_match": false,
+    "ack": "news dashboard updated",
+    "match": {
+      "event_type": "schedule",
+      "event_key": "news_dashboard",
+      "content_type": "trigger"
+    },
+    "actions": [
+      {
+        "type": "run_script",
+        "input": {
+          "path": "/fatfs/skills/news_dashboard/scripts/news_dashboard_runner.lua",
+          "args": {}
+        }
+      }
+    ]
+  },
+  {
+    "id": "market_monitor",
+    "description": "Every 15 minutes, fetch the configured market price (Brent crude by default) and show it with a threshold alert on the display.",
+    "enabled": true,
+    "consume_on_match": false,
+    "ack": "market monitor updated",
+    "match": {
+      "event_type": "schedule",
+      "event_key": "market_monitor",
+      "content_type": "trigger"
+    },
+    "actions": [
+      {
+        "type": "run_script",
+        "input": {
+          "path": "/fatfs/skills/market_monitor/scripts/market_monitor_runner.lua",
+          "args": {}
+        }
+      }
+    ]
+  },
+  {
+    "id": "market_watch_command",
+    "description": "Opt in/out of market price push alerts on the current chat: /watchprice [SYMBOL] [high] [low] | /watchprice off",
+    "enabled": true,
+    "consume_on_match": true,
+    "ack": "market alert preference updated",
+    "match": {
+      "event_type": "message",
+      "event_key": "text",
+      "content_type": "text",
+      "text": "/watchprice",
+      "text_match_rule": "prefix"
+    },
+    "actions": [
+      {
+        "type": "run_script",
+        "input": {
+          "path": "/fatfs/skills/market_monitor/scripts/market_watch_set.lua",
+          "args": {
+            "channel": "{{event.source_channel}}",
+            "chat_id": "{{event.chat_id}}",
+            "spec": "{{match.remainder}}"
+          }
+        }
+      },
+      {
+        "type": "send_message",
+        "input": {
+          "channel": "{{event.source_channel}}",
+          "chat_id": "{{event.chat_id}}",
+          "message": "Market price alerts updated for this chat."
+        }
+      }
+    ]
+  },
+  {
+    "id": "market_capture_chat",
+    "description": "Remember the current chat as the market-alert target (non-consuming, only sets it if unset).",
+    "enabled": true,
+    "consume_on_match": false,
+    "match": {
+      "event_type": "message",
+      "event_key": "text",
+      "content_type": "text"
+    },
+    "actions": [
+      {
+        "type": "run_script",
+        "input": {
+          "path": "/fatfs/skills/market_monitor/scripts/market_capture_chat.lua",
+          "args": {
+            "channel": "{{event.source_channel}}",
+            "chat_id": "{{event.chat_id}}"
+          }
+        }
+      }
+    ]
+  }
+]

@@ -1,6 +1,6 @@
 -- --------------------------------------------------------------
 -- Full-screen message on the Scintix P4 LCD, styled to match the ESP-Claw
--- face screen (same dark background) so the transition isn't jarring.
+-- idle screen (same dark background) so the transition isn't jarring.
 -- Invoked via the scintix_display skill (lua_run_script) or directly:
 --   lua --run --path /fatfs/skills/scintix_display/scripts/show_text.lua \
 --       --args-json "{\"text\":\"Hello\"}"
@@ -62,7 +62,7 @@ local run_ok, run_err = xpcall(function()
         valign = "middle",
     })
 
-    -- The message, centered, in a warm amber accent (distinct from the white emote font).
+    -- The message, centered, in a warm amber accent (distinct from the white UI font).
     display.draw_text_aligned(24, 0, width - 48, height, text, {
         color = rgb(255, 200, 100),
         font_size = font_size,
