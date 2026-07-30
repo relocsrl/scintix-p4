@@ -22,7 +22,7 @@ Fetch current headlines and show them on the device screen, for any subject.
 - The user asks to go back to the default tech/AI news.
 
 ## How it works
-`/fatfs/skills/news_dashboard/scripts/news_dashboard_runner.lua` runs a few web searches for the topic, mines complete headline-like sentences from the results (falling back to Google News RSS if search returns nothing), and renders up to 6 numbered headlines with horizontal scrolling for long titles, plus the local date/time (timezone resolved via geo-IP and cached). A scheduler item `news_dashboard` runs it every 15 minutes.
+`/fatfs/skills/news_dashboard/scripts/news_dashboard_runner.lua` runs a few web searches for the topic and takes the titles the search backend marks as markdown headings (`### ...`), which are the article titles; if a result set carries no such listing it falls back to mining complete sentences out of the prose, and if search returns nothing at all to Google News RSS. It renders up to 6 numbered headlines with horizontal scrolling for long titles, plus the local date/time (timezone resolved via geo-IP and cached). A scheduler item `news_dashboard` runs it every 15 minutes.
 
 The topic is resolved as: `args.topic` (one-shot) → persisted default (`/fatfs/scripts/news_topic.txt`) → built-in AI/TECH.
 
@@ -58,5 +58,5 @@ Same call, add `"set_default": true` inside `args`:
 
 ## Notes
 - Only ONE recurring topic at a time; setting a new default replaces the previous one.
-- Headlines are mined from search snippets, so the wording may differ slightly from the original article titles.
+- Headlines come from the search results, so a site that marks its navigation as headings can contribute a section name instead of a story, and the prose fallback may reword a title.
 - The dashboard shares the screen with the market monitor (offset by 7.5 minutes so they alternate); the runner takes the display exclusively. Starting it while another display script is still up is safe — it backs off and draws when the panel frees up — but it will take longer to come back.
