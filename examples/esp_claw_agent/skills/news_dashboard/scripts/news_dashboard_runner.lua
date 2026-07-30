@@ -105,6 +105,10 @@ end
 -- strip provider cruft, separators, trailing date/time stamps and terminal period
 local function clean(seg)
   local t=seg
+  -- Relative timestamps ("2h ago", "53m ago", "3 days ago") ride along with the
+  -- excerpt. Strip a leading one BEFORE the bullet rule below, which would eat
+  -- just its digits and leave "h ago ..." glued to the front of the headline.
+  t=t:gsub("^%s*%d+%s*%a+%s+ago%s*","")
   t=t:gsub("^%s*#+%s*","")                                              -- markdown heading
   t=t:gsub("^[Ii]mage%s+thumbnail%s+for%s+article%s+titled%s+","")      -- keep the real title
   t=t:gsub("^[Ii]mage%s+for%s+article%s+titled%s+","")
@@ -113,7 +117,7 @@ local function clean(seg)
   t=t:gsub("^%a+Category%s+","")
   t=t:gsub("^%s*[%-%*%d%.%)]+%s*","")
   t=t:gsub("%s*Read more.*$","")
-  t=t:gsub("%s*%d+%s+%a+%s+ago%s*$","")
+  t=t:gsub("%s*%d+%s*%a+%s+ago%s*$","")   -- "3 days ago" and the compact "2h ago"
   t=t:gsub("%s*Today,?%s*%d%d?:%d%d%s*$","")
   t=t:gsub("%s*[|·]%s.*$","")
   t=ascii(t)
@@ -125,34 +129,82 @@ local function sentences(line)
   local out={}
   local marked=(line.." "):gsub("([%.%!%?])(%s)","%1\1%2")
   marked=marked:gsub("%s*;%s*","\1"):gsub("\194\183","\1")  -- also break on ';' and middot
+  -- Search backends join non-adjacent excerpts with a literal "[...]". Without a
+  -- break there two unrelated titles arrive glued together, which then loses BOTH
+  -- of them: too long for the length filter, and the tail of the first one leaks
+  -- into the second. This is a property of the result format, not of the topic.
+  marked=marked:gsub("%s*%[%.%.%.%]%s*","\1")
   for raw in (marked.."\1"):gmatch("(.-)\1") do
     local p=trim(raw); if p~="" then out[#out+1]=p end
   end
   return out
 end
+-- split a raw line on the backend's "[...]" joiner only, leaving punctuation alone:
+-- two headings often arrive glued by it, and a heading must stay in one piece.
+local function chunks(line)
+  local out={}
+  for part in ((line:gsub("%s*%[%.%.%.%]%s*","\1")).."\1"):gmatch("(.-)\1") do
+    local p=trim(part); if p~="" then out[#out+1]=p end
+  end
+  return out
+end
+-- The backend marks each article title as a markdown heading and fills the lines
+-- around it with the byline, the image alt text and the category tags. Where the
+-- headings are present they ARE the headlines, so take them and ignore the prose:
+-- no pattern over prose can tell "Dual cones on a time axis" (an image caption)
+-- from a title, which is why mining drifts with the topic. Level matters: "###"
+-- is an article title, "##" a section name ("AI News Today", "Quantum Research").
+local function heading(seg)
+  local t=seg:match("^%s*###+%s+(.*)$")
+  if not t then return nil end
+  t=clean(t)
+  -- Archive listings head each group with a date; that is not a headline.
+  if t:lower():match("^%a+day,") then return nil end
+  return t
+end
+-- Returns the items plus which pass produced them, so the log line says which.
 local function from_search()
-  local items,seen={},{}
+  local head_items,mined,hseen,mseen={},{},{},{}
   for _,q in ipairs(queries) do
-    if #items>=MAX_ROWS then break end
+    if #head_items>=MAX_ROWS then break end
     local ok,o=capability.call("web_search",{query=q},{source_cap="news_dashboard"})
     if ok and type(o)=="string" then
       for line in (o.."\n"):gmatch("(.-)\n") do
         if not line:find("http",1,true) and not line:match("^%s*%d+%.%s") then
-          for _,seg in ipairs(sentences(line)) do
-            if complete(seg) then
-              local t=clean(seg); local low=t:lower()
-              if not generic(low) and not seen[low] then
-                seen[low]=true; items[#items+1]=shorten(t,TITLE_MAX)
-                if #items>=MAX_ROWS then break end
+          for _,ck in ipairs(chunks(line)) do
+            local hd=heading(ck)
+            if hd then
+              local low=hd:lower()
+              if not generic(low) and not hseen[low] then
+                hseen[low]=true; head_items[#head_items+1]=shorten(hd,TITLE_MAX)
+              end
+            elseif #mined<MAX_ROWS then
+              for _,seg in ipairs(sentences(ck)) do
+                if complete(seg) then
+                  local t=clean(seg); local low=t:lower()
+                  if not generic(low) and not mseen[low] then
+                    mseen[low]=true; mined[#mined+1]=shorten(t,TITLE_MAX)
+                    if #mined>=MAX_ROWS then break end
+                  end
+                end
               end
             end
           end
         end
-        if #items>=MAX_ROWS then break end
+        if #head_items>=MAX_ROWS then break end
       end
     end
   end
-  return items
+  -- A couple of stray headings prove nothing (a differently laid-out site); only
+  -- trust the heading pass when it really found a listing, else keep today's
+  -- behaviour rather than showing less.
+  if #head_items>=3 then
+    -- One line can carry two glued headings, so the loop can overshoot the row
+    -- budget the layout is sized for.
+    while #head_items>MAX_ROWS do table.remove(head_items) end
+    return head_items,"headings"
+  end
+  return mined,"prose"
 end
 -- fallback: Google News RSS (only if web_search yields nothing)
 local function decode(s) return (s:gsub("&amp;","&"):gsub("&#39;","'"):gsub("&#x27;","'"):gsub("&quot;",'"'):gsub("&apos;","'"):gsub("&lt;","<"):gsub("&gt;",">")) end
@@ -174,7 +226,7 @@ local function from_rss()
   return items
 end
 
-local heads=from_search(); local src="web_search"
+local heads,pass=from_search(); local src="web_search("..pass..")"
 if #heads==0 then heads=from_rss(); src="rss(fallback)" end
 if #heads==0 then heads={"No headlines available"}; src="none" end
 local stamp=now_str()
