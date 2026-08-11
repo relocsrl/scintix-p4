@@ -1,7 +1,9 @@
 # Scintix P4 — ESP-Claw (on-device AI agent)
 
 > Target: **ESP32-P4 + ESP32-C6** · Tested on **ESP-IDF v5.5.4** · Verified against esp-claw `ac2a2ec` and `6476658`
-
+>
+> 🚀 **SCINTIX P4 is coming to Crowd Supply!** [**Follow our pre-launch page**](https://www.crowdsupply.com/reloc/scintix-p4) to be notified the moment the campaign goes live.
+>
 [ESP-Claw](https://github.com/espressif/esp-claw) is Espressif's "chat-coding" **AI-agent runtime** for ESP32: the full sense → reason → decide → act loop runs on the chip, talking to an LLM over the network and acting through local Lua scripts (its *skills*). This example runs ESP-Claw on the **Scintix P4** — Wi-Fi comes from the on-board ESP32-C6, and the agent's face is shown on the MIPI-DSI display.
 
 On top of the plain agent it adds **two autonomous dashboards** that take turns on the panel every 15 minutes with no LLM involved, plus a demo skill the agent (or Claude over MCP) can call on demand:
