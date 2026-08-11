@@ -1,4 +1,4 @@
-# Scintix P4 — ESP-Claw (on-device AI agent)
+# Scintix P4 - ESP-Claw (on-device AI agent)
 
 > Target: **ESP32-P4 + ESP32-C6** · Tested on **ESP-IDF v5.5.4** · Verified against esp-claw `ac2a2ec` and `6476658`
 >
