@@ -1,7 +1,8 @@
 # Scintix P4 — ESP-Brookesia Phone Demo
 
 > Target: **ESP32-P4 + ESP32-C6** · Tested on **ESP-IDF v5.5.4**
-
+> 🚀 **SCINTIX P4 is coming to Crowd Supply!** [**Follow our pre-launch page**](https://www.crowdsupply.com/reloc/scintix-p4) to be notified the moment the campaign goes live.
+> 
 This example, based on [ESP-Brookesia](https://github.com/espressif/esp-brookesia), demonstrates an Android-like phone interface with several built-in apps (launcher, calculator, camera with on-device AI detection, 2048, music player, settings, and an optional SD-card video player). It exercises the Scintix P4's **MIPI-DSI** display, **MIPI-CSI** camera, **I2S** audio and the **ESP32-C6** wireless co-processor at the same time, so it doubles as a stress test of the module's multimedia subsystem.
 
 It is the most involved example in this repository: besides the wiring, it carries deliberate **adaptations for the Scintix P4 hardware and memory layout** (see [Adaptations](#adaptations-for-the-scintix-p4)). Read that section before reporting a crash — most boot/Camera-app failures on this board trace back to the heap configuration documented there.
