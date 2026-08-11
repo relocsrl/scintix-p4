@@ -1,4 +1,4 @@
-# Scintix P4 — ESP-Brookesia Phone Demo
+# Scintix P4 - ESP-Brookesia Phone Demo
 
 > Target: **ESP32-P4 + ESP32-C6** · Tested on **ESP-IDF v5.5.4**
 > 
