@@ -1,5 +1,7 @@
 # ESP32-C6 Wi-Fi co-processor firmware (Scintix P4)
 
+> 🚀 **SCINTIX P4 is coming to Crowd Supply!** [**Follow our pre-launch page**](https://www.crowdsupply.com/reloc/scintix-p4) to be notified the moment the campaign goes live.
+> 
 The ESP32-P4 has no built-in Wi-Fi. On the Scintix P4, connectivity is provided by the on-board **ESP32-C6**, which acts as a radio co-processor for the P4 over SDIO ([`esp_hosted`](https://components.espressif.com/components/espressif/esp_hosted)). For this to work the C6 must run its own *network-adapter* (esp_hosted **slave**) firmware — this is **separate** from the ESP-IDF application you flash to the ESP32-P4.
 
 > **Scintix P4 modules are shipped with this firmware already flashed on the C6, so in normal use you do _not_ need this procedure.** Use it only if you start from a blank C6, or want to restore or update the co-processor firmware.
